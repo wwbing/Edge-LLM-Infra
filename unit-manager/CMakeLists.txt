@@ -28,41 +28,28 @@ file(GLOB_RECURSE SRCS "src/main.cpp"
 "src/unit_data.cpp" 
 "src/zmq_bus.cpp"  
 "${CMAKE_SOURCE_DIR}/../network/src/*.cc")
-include_directories("include" "." )
+include_directories("include" "." 
+"/usr/local/include/"
+)
 
-find_package(simdjson REQUIRED)
-link_directories(/usr/lib/x86_64-linux-gnu)
+# find_package(simdjson REQUIRED)
+# link_directories(/usr/lib/x86_64-linux-gnu)
 
 add_executable(${PROJECT_NAME}  ${SRCS})
 
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    pthread 
+    util 
+    glog
+    pgm 
+    sodium 
+    norm
+    bsd
+    gssapi_krb5
+    zmq
+    /usr/local/lib/libsimdjson.a 
+    ${CMAKE_SOURCE_DIR}/../install/lib/libstackflow.a)
 
-foreach(lib ${REQUIREMENTS})
-    if(lib STREQUAL "pthread")
-        find_package(Threads REQUIRED)
-        target_link_libraries(${PROJECT_NAME} PRIVATE 
-        Threads::Threads 
-        pgm 
-        /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so 
-        /lib/x86_64-linux-gnu/libnorm.so 
-        /lib/x86_64-linux-gnu/libbsd.so.0 
-        /lib/x86_64-linux-gnu/libsodium.so 
-        /lib/x86_64-linux-gnu/libbsd.so.0 
-        /usr/lib/x86_64-linux-gnu/libzmq.a 
-        simdjson::simdjson 
-        ${CMAKE_SOURCE_DIR}/../install/lib/libstackflow.a)
-    else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${lib} 
-        pgm 
-        /usr/lib/x86_64-linux-gnu/libgssapi_krb5.so 
-        /lib/x86_64-linux-gnu/libbsd.so.0 
-        /lib/x86_64-linux-gnu/libnorm.so  
-        /lib/x86_64-linux-gnu/libsodium.so 
-        /lib/x86_64-linux-gnu/libbsd.so.0 
-        /usr/lib/x86_64-linux-gnu/libzmq.a 
-        simdjson::simdjson 
-        ${CMAKE_SOURCE_DIR}/../install/lib/libstackflow.a)
-    endif()
-endforeach()
 
 
 install(TARGETS ${PROJECT_NAME}
