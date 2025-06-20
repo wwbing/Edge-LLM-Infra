@@ -9,8 +9,8 @@ gid="$(id -g)"
 
 
 echo "stop and rm docker" 
-docker stop llm:v1.0 > /dev/null
-docker rm -v -f llm:v1.0 > /dev/null
+docker stop llm > /dev/null
+docker rm -v -f llm > /dev/null
 
 echo "start docker"
 docker run -it -d \
