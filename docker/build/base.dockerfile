@@ -11,13 +11,10 @@ COPY apt/sources.list /etc/apt/
 
 RUN apt-get update && \
     apt-get install -y \
-    libssl-dev gcc g++ make \
+    libssl-dev gcc g++ make gdb \
     curl \
-    git \
-    openssh-server \
     build-essential \
     libboost-all-dev \
-    net-tools \
     vim \
     libzmq3-dev \
     libgoogle-glog-dev \
