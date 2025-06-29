@@ -26,8 +26,8 @@ namespace StackFlows
     class pzmq
     {
     public:
-        typedef std::function<std::string(pzmq *, const std::shared_ptr<pzmq_data> &)> rpc_callback_fun;
-        typedef std::function<void(pzmq *, const std::shared_ptr<pzmq_data> &)> msg_callback_fun;
+        using rpc_callback_fun = std::function<std::string(pzmq *, const std::shared_ptr<pzmq_data> &)>;
+        using msg_callback_fun = std::function<void(pzmq *, const std::shared_ptr<pzmq_data> &)>;
 
     public:
         const int rpc_url_head_length = 6;
@@ -200,91 +200,46 @@ namespace StackFlows
             case ZMQ_PUB:
             {
                 return creat_pub(url);
-            }
-            break;
-            case ZMQ_SUB:
-            {
-                int reconnect_interval = 100;
-                zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL, &reconnect_interval, sizeof(reconnect_interval));
-
-                int max_reconnect_interval = 1000; // 5 seconds
-                zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL_MAX, &max_reconnect_interval,
-                               sizeof(max_reconnect_interval));
+            } break;
+            case ZMQ_SUB: {
                 return subscriber_url(url, raw_call);
-            }
-            break;
-            case ZMQ_PUSH:
-            {
-                int reconnect_interval = 100;
-                zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL, &reconnect_interval, sizeof(reconnect_interval));
-                int max_reconnect_interval = 1000; // 5 seconds
-                zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL_MAX, &max_reconnect_interval,
-                               sizeof(max_reconnect_interval));
+            } break;
+            case ZMQ_PUSH: {
                 return creat_push(url);
-            }
-            break;
+            } break;
             case ZMQ_PULL:
             {
                 return creat_pull(url, raw_call);
-            }
-            break;
+            } break;
             case ZMQ_RPC_FUN:
             {
                 return creat_rep(url, raw_call);
-            }
-            break;
+            } break;
             case ZMQ_RPC_CALL:
             {
                 return creat_req(url);
-            }
-            break;
+            } break;
             default:
                 break;
             }
             return 0;
         }
-        int check_zmq_errno(int code)
-        {
-            if (code == -1)
-            {
-                // SLOGE("Error occurred: %s", zmq_strerror(errno));
-                switch (errno)
-                {
-                case EAGAIN: // In non-blocking mode, the sending buffer is full, so the message cannot be sent
-                             // immediately.
-                    break;
-                case ENOTSUP: // The requested operation is not supported.
-                    break;
-                case EFSM: // Inconsistent state machine with the socket.
-                    break;
-                case ETERM: // The ZeroMQ context has been terminated.
-                    break;
-                case ENOTSOCK: // The provided socket is invalid.
-                    break;
-                case EINTR: // The operation was interrupted by a signal.
-                    break;
-                case EFAULT: // Invalid buffer or socket.
-                    break;
-                default:
-                    break;
-                }
-            }
-            return code;
-        }
+
         int send_data(const std::string &raw)
         {
             return zmq_send(zmq_socket_, raw.c_str(), raw.length(), 0);
         }
-        int send_data(const char *raw, int size)
-        {
-            return zmq_send(zmq_socket_, raw, size, 0);
-        }
+
         inline int creat_pub(const std::string &url)
         {
             return zmq_bind(zmq_socket_, url.c_str());
         }
         inline int creat_push(const std::string &url)
         {
+            int reconnect_interval = 100;
+            zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL, &reconnect_interval, sizeof(reconnect_interval));
+            int max_reconnect_interval = 1000;  // 5 seconds
+            zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL_MAX, &max_reconnect_interval, sizeof(max_reconnect_interval));
             zmq_setsockopt(zmq_socket_, ZMQ_SNDTIMEO, &timeout_, sizeof(timeout_));
             return zmq_connect(zmq_socket_, url.c_str());
         }
@@ -297,6 +252,11 @@ namespace StackFlows
         }
         inline int subscriber_url(const std::string &url, const msg_callback_fun &raw_call)
         {
+            int reconnect_interval = 100;
+            zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL, &reconnect_interval, sizeof(reconnect_interval));
+
+            int max_reconnect_interval = 1000;  // 5 seconds
+            zmq_setsockopt(zmq_socket_, ZMQ_RECONNECT_IVL_MAX, &max_reconnect_interval, sizeof(max_reconnect_interval));
             int ret = zmq_connect(zmq_socket_, url.c_str());
             zmq_setsockopt(zmq_socket_, ZMQ_SUBSCRIBE, "", 0);
             flage_ = false;
@@ -416,89 +376,5 @@ namespace StackFlows
             }
             close_zmq();
         }
-
-    private:
-        std::shared_ptr<void> context_ptr_;
-        std::weak_ptr<void> wcontext_ptr_;
-        void *ctx_;
-
-    public:
-        // context
-        void *context()
-        {
-            return ctx_;
-        }
-        void setContext(void *ctx)
-        {
-            ctx_ = ctx;
-        }
-        template <class T>
-        T *newContext()
-        {
-            ctx_ = new T;
-            return (T *)ctx_;
-        }
-        template <class T>
-        T *getContext()
-        {
-            return (T *)ctx_;
-        }
-        template <class T>
-        void deleteContext()
-        {
-            if (ctx_)
-            {
-                delete (T *)ctx_;
-                ctx_ = NULL;
-            }
-        }
-
-        // contextPtr
-        std::shared_ptr<void> contextPtr()
-        {
-            return context_ptr_;
-        }
-        void setContextPtr(const std::shared_ptr<void> &ctx)
-        {
-            context_ptr_ = ctx;
-        }
-        void setContextPtr(std::shared_ptr<void> &&ctx)
-        {
-            context_ptr_ = std::move(ctx);
-        }
-        template <class T>
-        std::shared_ptr<T> newContextPtr()
-        {
-            context_ptr_ = std::make_shared<T>();
-            return std::static_pointer_cast<T>(context_ptr_);
-        }
-        template <class T>
-        std::shared_ptr<T> getContextPtr()
-        {
-            return std::static_pointer_cast<T>(context_ptr_);
-        }
-        void deleteContextPtr()
-        {
-            context_ptr_.reset();
-        }
-
-        // wcontextPtr
-        std::shared_ptr<void> wcontextPtr()
-        {
-            return wcontext_ptr_.lock();
-        }
-        void wsetContextPtr(const std::shared_ptr<void> &ctx)
-        {
-            wcontext_ptr_ = ctx;
-        }
-        template <class T>
-        std::shared_ptr<T> wgetContextPtr()
-        {
-            return std::static_pointer_cast<T>(wcontext_ptr_.lock());
-        }
-        void wdeleteContextPtr()
-        {
-            wcontext_ptr_.reset();
-        }
     };
-}; // namespace StackFlows
+    };  // namespace StackFlows

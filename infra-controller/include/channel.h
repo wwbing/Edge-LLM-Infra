@@ -40,7 +40,6 @@ namespace StackFlows
         std::string inference_url_;
         std::string publisher_url_;
         std::string output_url_;
-        static std::string uart_push_url;
         std::string publisher_url;
 
         llm_channel_obj(const std::string &_publisher_url, const std::string &inference_url, const std::string &unit_name);
@@ -68,46 +67,14 @@ namespace StackFlows
         void stop_subscriber_work_id(const std::string &work_id);
         void subscriber(const std::string &zmq_url, const pzmq::msg_callback_fun &call);
         void stop_subscriber(const std::string &zmq_url);
-        int check_zmq_errno(void *ctx, void *com, int code);
         int send_raw_to_pub(const std::string &raw);
         int send_raw_to_usr(const std::string &raw);
-        template <typename T, typename U>
-        int output_data(const std::string &object, const T &data, const U &error_msg)
-        {
-            return output_data(request_id_, work_id_, object, data, error_msg);
-        }
         void set_push_url(const std::string &url);
         void cear_push_url();
-        static int output_to_uart(const std::string &data);
         static int send_raw_for_url(const std::string &zmq_url, const std::string &raw);
+
         template <typename T, typename U>
-        static int output_data_for_url(const std::string &zmq_url, const std::string &request_id,
-                                       const std::string &work_id, const std::string &object, const U &data,
-                                       const T &error_msg, bool outuart = false)
-        {
-            nlohmann::json out_body;
-            out_body["request_id"] = request_id;
-            out_body["work_id"] = work_id;
-            out_body["created"] = time(NULL);
-            out_body["object"] = object;
-            out_body["data"] = data;
-            if (error_msg.empty())
-            {
-                out_body["error"]["code"] = 0;
-                out_body["error"]["message"] = "";
-            }
-            else
-                out_body["error"] = error_msg;
-            std::string out = out_body.dump();
-            out += "\n";
-            if (outuart)
-                return output_to_uart(out);
-            else
-                return send_raw_for_url(zmq_url, out);
-        }
-        template <typename T, typename U>
-        int send(const std::string &object, const U &data, const T &error_msg, const std::string &work_id = "",
-                 bool outuart = false)
+        int send(const std::string &object, const U &data, const T &error_msg, const std::string &work_id = "")
         {
             nlohmann::json out_body;
             out_body["request_id"] = request_id_;
@@ -131,31 +98,6 @@ namespace StackFlows
             {
                 return send_raw_to_usr(out);
             }
-            return 0;
-        }
-        template <typename T, typename U>
-        int output_data(const std::string &request_id, const std::string &work_id, const std::string &object, const T &data,
-                        const U &error_msg)
-        {
-            nlohmann::json out_body;
-            out_body["request_id"] = request_id;
-            out_body["work_id"] = work_id;
-            out_body["created"] = time(NULL);
-            out_body["object"] = object;
-            out_body["data"] = data;
-            if (error_msg.empty())
-            {
-                out_body["error"]["code"] = 0;
-                out_body["error"]["message"] = "";
-            }
-            else
-                out_body["error"] = error_msg;
-
-            std::string out = out_body.dump();
-            out += "\n";
-            send_raw_to_pub(out);
-            if (enoutput_)
-                return send_raw_to_usr(out);
             return 0;
         }
     };

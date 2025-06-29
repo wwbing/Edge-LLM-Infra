@@ -12,7 +12,6 @@
 #include <iostream>
 
 #include "all.h"
-#include "event_loop.h"
 
 #include "zmq_bus.h"
 #include "remote_action.h"
@@ -87,7 +86,6 @@ int main(int argc, char *argv[])
     }
     ALOGD("llm_sys start");
     get_run_config();
-    // uart_reset_check();
     all_work();
     ALOGD("llm_sys work");
     while (main_exit_flage == 0)

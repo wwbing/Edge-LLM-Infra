@@ -40,9 +40,10 @@ void zmq_bus_com::work(const std::string &zmq_url_format, int port)
     std::vector<char> buff(zmq_url_format.length() + ports.length(), 0);
     sprintf((char *)buff.data(), zmq_url_format.c_str(), port);
     _zmq_url = std::string((char *)buff.data());
-    user_chennal_ = std::make_unique<pzmq>(_zmq_url, ZMQ_PULL,
-                                           [this](pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
-                                           { this->send_data(data->string()); });
+    user_chennal_ =
+        std::make_unique<pzmq>(_zmq_url, ZMQ_PULL, [this](pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data) {
+            this->send_data(data->string());
+        });
 }
 
 void zmq_bus_com::stop()
@@ -116,7 +117,6 @@ void zmq_bus_com::on_bson_data(const std::string &data)
 
 void zmq_bus_com::send_data(const std::string &data)
 {
-    // printf("zmq_bus_com::send_data : send:%s\n", data.c_str());
 }
 
 void zmq_bus_com::reace_data_event()

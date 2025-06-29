@@ -16,7 +16,8 @@ include_directories(
     ../infra-controller/include
     ../utils
     ../network/include
-
+    "/usr/local/include/"
+    "include" "." 
 )
 
 file(GLOB_RECURSE SRCS "src/main.cpp" 
@@ -24,13 +25,11 @@ file(GLOB_RECURSE SRCS "src/main.cpp"
 "src/config.cpp" 
 "src/tcp_comm.cpp"
 "src/remote_action.cpp" 
-"src/event_loop.cpp" 
 "src/unit_data.cpp" 
 "src/zmq_bus.cpp"  
 "${CMAKE_SOURCE_DIR}/../network/src/*.cc")
-include_directories("include" "." 
-"/usr/local/include/"
-)
+
+
 
 # find_package(simdjson REQUIRED)
 # link_directories(/usr/lib/x86_64-linux-gnu)

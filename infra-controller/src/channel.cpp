@@ -4,8 +4,6 @@
 
 using namespace StackFlows;
 
-std::string llm_channel_obj::uart_push_url;
-
 llm_channel_obj::llm_channel_obj(const std::string &_publisher_url, const std::string &inference_url,
                                  const std::string &unit_name)
     : unit_name_(unit_name), inference_url_(inference_url), publisher_url_(_publisher_url)
@@ -65,10 +63,7 @@ int llm_channel_obj::subscriber_work_id(const std::string &work_id,
             // std::string part1 = matches[1].str();
             id_num = std::stoi(matches[2].str());
             std::string input_url_name = work_id + ".out_port";
-            std::cout << "input_url_name: " << input_url_name << std::endl;
-
             std::string input_url = unit_call("sys", "sql_select", input_url_name);
-            std::cout << "input_url: " << input_url << std::endl;
             if (input_url.empty())
             {
                 return -1;
@@ -164,9 +159,4 @@ int llm_channel_obj::send_raw_for_url(const std::string &zmq_url, const std::str
 {
     pzmq _zmq(zmq_url, ZMQ_PUSH);
     return _zmq.send_data(raw);
-}
-
-int llm_channel_obj::output_to_uart(const std::string &data)
-{
-    return send_raw_for_url(uart_push_url, data);
 }

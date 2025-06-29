@@ -10,7 +10,7 @@
 using namespace StackFlows;
 
 StackFlow::StackFlow::StackFlow(const std::string &unit_name)
-    : work_id_num_cout_(1000), unit_name_(unit_name), rpc_ctx_(std::make_unique<pzmq>(unit_name))
+    : unit_name_(unit_name), rpc_ctx_(std::make_unique<pzmq>(unit_name))
 {
     event_queue_.appendListener(EVENT_NONE, std::bind(&StackFlow::_none_event, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_PAUSE, std::bind(&StackFlow::_pause, this, std::placeholders::_1));
@@ -20,7 +20,6 @@ StackFlow::StackFlow::StackFlow(const std::string &unit_name)
     event_queue_.appendListener(EVENT_LINK, std::bind(&StackFlow::_link, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_UNLINK, std::bind(&StackFlow::_unlink, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_TASKINFO, std::bind(&StackFlow::_taskinfo, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_SYS_INIT, std::bind(&StackFlow::_sys_init, this, std::placeholders::_1));
     rpc_ctx_->register_rpc_action(
         "setup", std::bind(&StackFlow::_rpc_setup, this, std::placeholders::_1, std::placeholders::_2));
     rpc_ctx_->register_rpc_action(
@@ -39,7 +38,6 @@ StackFlow::StackFlow::StackFlow(const std::string &unit_name)
     status_.store(0);
     exit_flage_.store(false);
     even_loop_thread_ = std::make_unique<std::thread>(std::bind(&StackFlow::even_loop, this));
-    llm_channel_obj::uart_push_url = std::string("ipc:///tmp/llm/5556.sock");
     status_.store(1);
 }
 
@@ -47,6 +45,10 @@ StackFlow::~StackFlow()
 {
     while (1)
     {
+        exit_flage_.store(true);
+        event_queue_.enqueue(EVENT_NONE, nullptr);
+        even_loop_thread_->join();
+
         auto iteam = llm_task_channel_.begin();
         if (iteam == llm_task_channel_.end())
         {
@@ -56,17 +58,13 @@ StackFlow::~StackFlow()
         iteam->second.reset();
         llm_task_channel_.erase(iteam->first);
     }
-    exit_flage_.store(true);
-    event_queue_.enqueue(EVENT_NONE, nullptr);
-    even_loop_thread_->join();
 }
 
 void StackFlow::even_loop()
 {
-    pthread_setname_np(pthread_self(), "even_loop"); 
+    pthread_setname_np(pthread_self(), "even_loop");
 
-    while (!exit_flage_.load())
-    {
+    while (!exit_flage_.load()) {
         event_queue_.wait();
         event_queue_.process();
     }
@@ -75,11 +73,6 @@ void StackFlow::even_loop()
 void StackFlow::_none_event(const std::shared_ptr<void> &arg)
 {
     // std::shared_ptr<stackflow_data> originalPtr = std::static_pointer_cast<stackflow_data>(arg);
-}
-
-void StackFlow::_sys_init(const std::shared_ptr<void> &arg)
-{
-    // todo:...
 }
 
 std::string StackFlow::_rpc_setup(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)

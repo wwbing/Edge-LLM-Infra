@@ -11,7 +11,6 @@ void unit_data::init_zmq(const std::string &url)
 
 void unit_data::send_msg(const std::string &json_str)
 {
-    std::cout << "inference_url: " << inference_url << std::endl;
     user_inference_chennal_->send_data(json_str);
 }
 

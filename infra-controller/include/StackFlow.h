@@ -60,15 +60,9 @@ namespace StackFlows
         int int_data[2];
     };
 
-    class StackFlow
-    {
-    private:
-        std::atomic_int work_id_num_cout_;
-
+    class StackFlow {
     public:
-        std::string unit_name_;
-        typedef enum
-        {
+        typedef enum {
             EVENT_NONE = 0,
             EVENT_SETUP,
             EVENT_EXIT,
@@ -86,17 +80,20 @@ namespace StackFlows
             EVENT_EXPORT,
         } local_event_t;
 
-        eventpp::EventQueue<int, void(const std::shared_ptr<void> &)> event_queue_;
-        std::unique_ptr<std::thread> even_loop_thread_;
-        std::unique_ptr<pzmq> rpc_ctx_;
-        std::atomic<int> status_;
-        std::unordered_map<int, std::shared_ptr<llm_channel_obj>> llm_task_channel_;
-        std::unordered_map<std::string, std::function<int(void)>> repeat_callback_fun_;
-        std::mutex repeat_callback_fun_mutex_;
-
-    public:
+        std::string unit_name_;
         std::string request_id_;
         std::string out_zmq_url_;
+
+        std::atomic<bool> exit_flage_;
+        std::atomic<int> status_;
+
+        // 线程安全的事件队列，存储事件类型
+        eventpp::EventQueue<int, void(const std::shared_ptr<void> &)> event_queue_;
+        std::unique_ptr<std::thread> even_loop_thread_;
+
+        std::unique_ptr<pzmq> rpc_ctx_;
+
+        std::unordered_map<int, std::shared_ptr<llm_channel_obj>> llm_task_channel_;
 
         std::function<void(const std::string &, const std::string &, const std::string &)> _link_;
         std::function<void(const std::string &, const std::string &, const std::string &)> _unlink_;
@@ -106,8 +103,6 @@ namespace StackFlows
         std::function<void(const std::string &, const std::string &, const std::string &)> _work_;
         std::function<void(const std::string &, const std::string &, const std::string &)> _taskinfo_;
         std::function<void(const std::string &, const std::string &, const std::string &)> _get_channl_;
-
-        std::atomic<bool> exit_flage_;
 
         StackFlow(const std::string &unit_name);
         void even_loop();
@@ -233,9 +228,6 @@ namespace StackFlows
         virtual void taskinfo(const std::string &zmq_url, const std::string &raw);
         virtual void taskinfo(const std::string &work_id, const std::string &object, const std::string &data);
 
-        void _sys_init(const std::shared_ptr<void> &arg);
-
-        void user_output(const std::string &zmq_url, const std::string &request_id, const std::string &data);
         template <typename T, typename U>
         int send(const std::string &object, const U &data, const T &error_msg, const std::string &work_id,
                  const std::string &zmq_url = "")

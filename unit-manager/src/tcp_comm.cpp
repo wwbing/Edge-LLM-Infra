@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "all.h"
-#include "event_loop.h"
 #include "session.h"
 #include "zmq_bus.h"
 #include <boost/any.hpp>
@@ -94,7 +93,6 @@ void tcp_work()
     server->setThreadNum(2);
 
     server->start();
-    std::cout << "Server started on port " << listenport << std::endl;
     loop.loop();
 }
 

@@ -17,7 +17,7 @@ public:
 
     void send_data(const std::string &data) override
     {
-
+        printf("zmq_bus_com::send_data : send:%s\n", data.c_str());
         network::Buffer *buf = new network::Buffer;
         buf->append(data.c_str(), data.size());
         conn_->send(buf); 
