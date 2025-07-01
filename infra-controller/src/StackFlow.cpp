@@ -368,7 +368,6 @@ bool StackFlow::sys_release_unit(int work_id_num, const std::string &work_id)
 
 std::string StackFlow::sys_sql_select(const std::string &key)
 {
-    return sample_unescapeString(unit_call("sys", "sql_select", key));
 }
 
 void StackFlow::sys_sql_set(const std::string &key, const std::string &val)

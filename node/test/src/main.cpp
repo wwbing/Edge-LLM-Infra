@@ -170,14 +170,13 @@ public:
         }
         const std::string *next_data = &data;
         int ret;
-        std::string tmp_msg1;
+        std::string tmp_msg;
         if (object.find("stream") != std::string::npos)
         {
             static std::unordered_map<int, std::string> stream_buff;
             try
             {
-                if (decode_stream(data, tmp_msg1, stream_buff))
-                {
+                if (decode_stream(data, tmp_msg, stream_buff)) {
                     return;
                 };
             }
@@ -189,21 +188,9 @@ public:
                 send("None", "None", error_body, unit_name_);
                 return;
             }
-            next_data = &tmp_msg1;
+            next_data = &tmp_msg;
         }
-        std::string tmp_msg2;
-        if (object.find("base64") != std::string::npos)
-        {
-            ret = decode_base64((*next_data), tmp_msg2);
-            if (ret == -1)
-            {
-                error_body["code"] = -23;
-                error_body["message"] = "Base64 decoding error.";
-                send("None", "None", error_body, unit_name_);
-                return;
-            }
-            next_data = &tmp_msg2;
-        }
+
         llm_task_obj->inference((*next_data));
     }
 
@@ -336,6 +323,5 @@ int main(int argc, char *argv[])
     {
         sleep(1);
     }
-    llm.llm_firework_exit();
     return 0;
 }

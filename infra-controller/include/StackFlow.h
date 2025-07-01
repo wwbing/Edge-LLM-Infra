@@ -262,10 +262,6 @@ namespace StackFlows
             }
         }
 
-        void llm_firework_exit()
-        {
-        }
-
         std::string sys_sql_select(const std::string &key);
         void sys_sql_set(const std::string &key, const std::string &val);
         void sys_sql_unset(const std::string &key);

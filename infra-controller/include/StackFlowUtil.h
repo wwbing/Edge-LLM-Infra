@@ -30,11 +30,8 @@ std::string sample_json_str_get(const std::string &json_str, const std::string &
 int sample_get_work_id_num(const std::string &work_id);
 std::string sample_get_work_id_name(const std::string &work_id);
 std::string sample_get_work_id(int work_id_num, const std::string &unit_name);
-std::string sample_escapeString(const std::string &input);
-std::string sample_unescapeString(const std::string &input, bool ucs2 = false);
 bool decode_stream(const std::string &in, std::string &out, std::unordered_map<int, std::string> &stream_buff);
-int decode_base64(const std::string &in, std::string &out);
-int encode_base64(const std::string &in, std::string &out);
+
 std::string unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data);
 void unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data, std::function<void(const std::shared_ptr<StackFlows::pzmq_data> &)> callback);
 std::list<std::string> get_config_file_paths(std::string &base_model_path, std::string &base_model_config_path, const std::string &mode_name);
