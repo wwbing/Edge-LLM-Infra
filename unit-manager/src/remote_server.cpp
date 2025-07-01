@@ -76,30 +76,7 @@ unit_data *sys_allocate_unit(const std::string &unit)
         std::string zmq_s_url = std::string((char *)buff.data());
         unit_p->output_url = zmq_s_url;
     }
-    {
-        int port;
-        for (size_t i = 0; i < port_list.size(); i++)
-        {
-            if (!port_list[i])
-            {
-                port = port_list_start + i;
-                port_list[i] = true;
-                break;
-            }
-        }
-        std::string ports = std::to_string(port);
-        std::string zmq_format = zmq_c_format;
-        if (zmq_s_format.find("sock") != std::string::npos)
-        {
-            zmq_format += ".";
-            zmq_format += unit;
-            zmq_format += ".input_url";
-        }
-        std::vector<char> buff(zmq_format.length() + ports.length(), 0);
-        sprintf((char *)buff.data(), zmq_format.c_str(), port);
-        std::string zmq_c_url = std::string((char *)buff.data());
-        unit_p->input_url = zmq_c_url;
-    }
+
     {
         int port;
         for (size_t i = 0; i < port_list.size(); i++)
@@ -140,8 +117,6 @@ int sys_release_unit(const std::string &unit)
 
     int port;
     sscanf(unit_p->output_url.c_str(), zmq_s_format.c_str(), &port);
-    port_list[port - port_list_start] = false;
-    sscanf(unit_p->input_url.c_str(), zmq_c_format.c_str(), &port);
     port_list[port - port_list_start] = false;
     sscanf(unit_p->inference_url.c_str(), zmq_s_format.c_str(), &port);
     port_list[port - port_list_start] = false;
@@ -243,34 +218,29 @@ void unit_action_match(int com_id, const std::string &json_str)
         usr_print_error("0", "sys", "{\"code\":-2, \"message\":\"json format error\"}", com_id);
         return;
     }
-    std::string_view sv;
-
-    // std::string request_id;
-    error = doc["request_id"].get_string().get(sv);
-    std::string request_id(sv);
+    std::string request_id;
+    error = doc["request_id"].get_string(request_id);
     if (error) {
         ALOGE("miss request_id, error:%s", simdjson::error_message(error));
         usr_print_error("0", "sys", "{\"code\":-2, \"message\":\"json format error\"}", com_id);
         return;
     }
-    // std::string work_id;
-    error = doc["work_id"].get_string().get(sv);
-    std::string work_id(sv);
+    std::string work_id;
+    error = doc["work_id"].get_string(work_id);
     if (error) {
         ALOGE("miss work_id, error:%s", simdjson::error_message(error));
         usr_print_error("0", "sys", "{\"code\":-2, \"message\":\"json format error\"}", com_id);
         return;
     }
     if (work_id.empty()) work_id = "sys";
-    // std::string action;
-    error = doc["action"].get_string().get(sv);
-    std::string action(sv);
+    std::string action;
+    error = doc["action"].get_string().get(action);
     if (error) {
         ALOGE("miss action, error:%s", simdjson::error_message(error));
         usr_print_error("0", "sys", "{\"code\":-2, \"message\":\"json format error\"}", com_id);
         return;
     }
-    //
+
     std::vector<std::string> work_id_fragment;
     std::string fragment;
     for (auto c : work_id) {
@@ -294,15 +264,6 @@ void unit_action_match(int com_id, const std::string &json_str)
         int ret = zmq_bus_publisher_push(work_id, inference_raw_data);
         if (ret) {
             usr_print_error(request_id, work_id, "{\"code\":-4, \"message\":\"inference data push false\"}", com_id);
-        }
-    } else if ((work_id_fragment.size() > 0) && (work_id_fragment[0] == "sys")) {
-        std::string unit_action = "sys." + action;
-        sys_fun_call call_fun   = NULL;
-        SAFE_READING(call_fun, sys_fun_call, unit_action);
-        if (call_fun) {
-            call_fun(com_id, nlohmann::json::parse(json_str));
-        } else {
-            usr_print_error(request_id, work_id, "{\"code\":-3, \"message\":\"action match false\"}", com_id);
         }
     } else {
         if ((work_id_fragment[0].length() != 0) && (remote_call(com_id, json_str) != 0)) {

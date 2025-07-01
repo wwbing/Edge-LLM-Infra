@@ -20,7 +20,6 @@
 
 using namespace StackFlows;
 
-void unit_action_match(int com_id, const std::string &json_str);
 
 void remote_server_work();
 void remote_server_stop_work();

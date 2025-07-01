@@ -369,64 +369,6 @@ void StackFlows::unit_call(const std::string &unit_name, const std::string &unit
     _call.call_rpc_action(unit_action, data, [callback](StackFlows::pzmq *_pzmq, const std::shared_ptr<StackFlows::pzmq_data> &raw) { callback(raw); });
 }
 
-std::list<std::string> StackFlows::get_config_file_paths(std::string &base_model_path,
-                                                         std::string &base_model_config_path,
-                                                         const std::string &mode_name)
-{
-    if (base_model_path.empty()) {
-        base_model_path = sample_unescapeString(unit_call("sys", "sql_select", "config_base_mode_path"));
-        if (base_model_path.empty()) {
-            base_model_path = "/opt/m5stack/data/";
-        }
-    }
-    if (base_model_config_path.empty()) {
-        base_model_config_path = sample_unescapeString(unit_call("sys", "sql_select", "config_base_mode_config_path"));
-        if (base_model_config_path.empty()) {
-            base_model_config_path = "/opt/m5stack/etc/";
-        }
-    }
-    std::string config_model_d = sample_unescapeString(unit_call("sys", "sql_select", "config_model_d"));
-    if (config_model_d.empty()) config_model_d = "/opt/m5stack/data/models/";
-
-    std::list<std::string> config_file_paths;
-    config_file_paths.push_back(std::string("./") + mode_name + ".json");
-    config_file_paths.push_back(std::string("./mode_") + mode_name + ".json");
-    config_file_paths.push_back(base_model_path + mode_name + std::string("/") + mode_name + ".json");
-    config_file_paths.push_back(base_model_path + mode_name + std::string("/") + std::string("./mode_") + mode_name +
-                                ".json");
-    config_file_paths.push_back(config_model_d + mode_name + ".json");
-    config_file_paths.push_back(config_model_d + std::string("./mode_") + mode_name + ".json");
-    config_file_paths.push_back(base_model_config_path + mode_name + ".json");
-    config_file_paths.push_back(base_model_config_path + std::string("./mode_") + mode_name + ".json");
-    config_file_paths.push_back(base_model_path + std::string("../share/") + mode_name + ".json");
-    config_file_paths.push_back(base_model_path + std::string("../share/") + std::string("./mode_") + mode_name +
-                                ".json");
-    return config_file_paths;
-}
-
-std::vector<std::string> StackFlows::glob_files(const std::vector<std::string> &patterns)
-{
-    std::vector<std::string> files;
-    glob_t glob_result;
-    memset(&glob_result, 0, sizeof(glob_result));
-    for (const auto &pattern : patterns) {
-        int ret = glob(pattern.c_str(), GLOB_TILDE | GLOB_BRACE, nullptr, &glob_result);
-        if (ret != 0) {
-            // if (ret == GLOB_NOMATCH) {
-            //     std::cerr << "No files matched for pattern: " << pattern << std::endl;
-            // } else {
-            //     std::cerr << "glob() failed with error code: " << ret << std::endl;
-            // }
-            continue;
-        }
-        for (size_t i = 0; i < glob_result.gl_pathc; ++i) {
-            files.push_back(glob_result.gl_pathv[i]);
-        }
-    }
-    globfree(&glob_result);
-    return files;
-}
-
 bool StackFlows::file_exists(const std::string &filePath)
 {
     std::ifstream file(filePath);

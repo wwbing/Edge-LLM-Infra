@@ -21,15 +21,11 @@
 
 using namespace StackFlows;
 
-void unit_action_match(int com_id, const std::string &json_str);
-
 zmq_bus_com::zmq_bus_com()
 {
     exit_flage = 1;
     err_count = 0;
     json_str_flage_ = 0;
-    reace_event_ = 0;
-    raw_msg_len_ = 0;
 }
 
 void zmq_bus_com::work(const std::string &zmq_url_format, int port)
@@ -58,82 +54,10 @@ void zmq_bus_com::on_data(const std::string &data)
     unit_action_match(_port, data);
 }
 
-void zmq_bus_com::on_raw_data(const std::string &data)
-{
-    std::string base64_data;
-    int ret = StackFlows::encode_base64(data, base64_data);
-    ssize_t pos = json_str_.find("\"data\"");
-    if (pos != std::string::npos)
-    {
-        ssize_t end_pos = pos + 6;
-        int status = 0;
-        for (ssize_t end_pos = pos + 6; end_pos < json_str_.length(); end_pos++)
-        {
-            if ((json_str_[end_pos] == '\"') || (json_str_[end_pos] == ',') || (json_str_[end_pos] == '}'))
-            {
-                status++;
-            }
-            if (status == 3)
-            {
-                break;
-            }
-        }
-        json_str_.erase(pos, end_pos - pos);
-    }
-    std::string new_data;
-    new_data.resize(json_str_.length() + 10 + base64_data.length());
-    memcpy((void *)new_data.data(), json_str_.c_str(), json_str_.length());
-    sprintf((char *)(new_data.data() + json_str_.length() - 1), ",\"data\":\"");
-    memcpy((void *)(new_data.data() + json_str_.length() + 8), base64_data.c_str(), base64_data.length());
-    new_data[json_str_.length() + 8 + base64_data.length()] = '"';
-    new_data[json_str_.length() + 9 + base64_data.length()] = '}';
-    on_data(new_data);
-}
-
-void zmq_bus_com::on_bson_data(const std::string &data)
-{
-#ifdef ENABLE_BSON
-    bson_t *bson = bson_new_from_data((const uint8_t *)data.c_str(), data.length());
-    if (!bson)
-    {
-        SLOGW("bson is error");
-        return;
-    }
-    char *json = bson_as_canonical_extended_json(bson, NULL);
-    if (!json)
-    {
-        SLOGW("bson to json error");
-        bson_destroy(bson);
-        return;
-    }
-    std::string new_data(json);
-    on_data(new_data);
-    bson_free(json);
-    bson_destroy(bson);
-#else
-    ALOGW("bson not enable");
-#endif
-}
-
 void zmq_bus_com::send_data(const std::string &data)
 {
 }
 
-void zmq_bus_com::reace_data_event()
-{
-    // while (exit_flage)
-    // {
-    //     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // }
-}
-
-void zmq_bus_com::send_data_event()
-{
-    // while (exit_flage)
-    // {
-    //     std::this_thread::sleep_for(std::chrono::seconds(1));
-    // }
-}
 
 zmq_bus_com::~zmq_bus_com()
 {
@@ -145,6 +69,8 @@ zmq_bus_com::~zmq_bus_com()
 
 int zmq_bus_publisher_push(const std::string &work_id, const std::string &json_str)
 {
+    ALOGW("zmq_bus_publisher_push json_str:%s", json_str.c_str());
+
     if (work_id.empty())
     {
         ALOGW("work_id is empty");
@@ -173,14 +99,6 @@ void zmq_com_send(int com_id, const std::string &out_str)
     pzmq _zmq(zmq_push_url, ZMQ_PUSH);
     std::string out = out_str + "\n";
     _zmq.send_data(out);
-}
-
-void zmq_bus_work()
-{
-}
-
-void zmq_bus_stop_work()
-{
 }
 
 void zmq_bus_com::select_json_str(const std::string &json_src, std::function<void(const std::string &)> out_fun)

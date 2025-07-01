@@ -11,7 +11,6 @@ private:
 
 public:
     std::string work_id;
-    std::string input_url;
     std::string output_url;
     std::string inference_url;
     int port_;

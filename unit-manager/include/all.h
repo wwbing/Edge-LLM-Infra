@@ -50,6 +50,7 @@ extern pthread_spinlock_t key_sql_lock;
     } while (0)
 
 void load_default_config();
+void unit_action_match(int com_id, const std::string &json_str);
 
 extern std::string zmq_s_format;
 extern std::string zmq_c_format;
