@@ -78,14 +78,18 @@ public:
 
     void inference(const std::string &msg)
     {
-        if (out_callback_)
-            out_callback_(std::string("hello"), true);
+        if (out_callback_) {
+            out_callback_(msg, false);
+            out_callback_(std::string("hello"), false);
+
+            out_callback_(std::string(""), true);
+        }
     }
 
     llm_task(const std::string &workid)
     {
     }
-
+ 
     void start()
     {
     }
@@ -130,7 +134,7 @@ public:
             if (!finish)
                 data_body["delta"] = data;
             else
-                data_body["delta"] = std::string("test inference: hello!!!");
+                data_body["delta"] = std::string("");
             data_body["finish"] = finish;
             if (finish)
                 count = 0;

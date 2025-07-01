@@ -85,6 +85,20 @@ def parse_inference_response(response_data):
     return response_data.get('data')
 
 
+def receive_json_stream(sock):
+    """生成器函数，持续返回完整JSON对象"""
+    buffer = ""
+    while True:
+        chunk = sock.recv(4096).decode('utf-8', errors='ignore')
+        if not chunk:
+            break
+        buffer += chunk
+        
+        while '\n' in buffer:
+            line, buffer = buffer.split('\n', 1)
+            if line.strip():  
+                yield line.strip()
+
 def main(host, port):
     sock = create_tcp_connection(host, port)
 
@@ -112,21 +126,21 @@ def main(host, port):
             })
 
             while True:
-                response = receive_response(sock)
-                response_data = json.loads(response)
-
-                data = parse_inference_response(response_data)
-                if data is None:
-                    break
-
-                delta = data.get('delta')
-                finish = data.get('finish')
-                print(delta, end='', flush=True)
-
-                if finish:
-                    print()
-                    break
-
+                for raw_response in receive_json_stream(sock):
+              
+                    response = json.loads(raw_response)
+                    print(f"all response: {response}")
+                    delta = response.get("data", {}).get("delta", "")
+                    finish = response.get("data", {}).get("finish", False)
+                    
+                    if delta:
+                        print(delta, end='', flush=True)
+                        print() 
+                    
+                    if finish:
+                        print()  
+                        break
+            
         exit_session(sock, {
             "request_id": "llm_exit",
             "work_id": llm_work_id,
