@@ -52,9 +52,7 @@ namespace StackFlows
         }
 
     public:
-        pzmq() : zmq_ctx_(NULL), zmq_socket_(NULL), flage_(true), timeout_(3000)
-        {
-        }
+        // RPC 通信创建-惰性
         pzmq(const std::string &server)
             : zmq_ctx_(NULL), zmq_socket_(NULL), rpc_server_(server), flage_(true), timeout_(3000)
         {
@@ -63,6 +61,8 @@ namespace StackFlows
                 rpc_url_head_.clear();
             }
         }
+
+        // 具体通信模式创建
         pzmq(const std::string &url, int mode, const msg_callback_fun &raw_call = nullptr)
             : zmq_ctx_(NULL), zmq_socket_(NULL), mode_(mode), flage_(true), timeout_(3000)
         {
