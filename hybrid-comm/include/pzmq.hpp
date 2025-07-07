@@ -53,7 +53,7 @@ namespace StackFlows
 
     public:
         // RPC 通信创建-惰性
-        pzmq(const std::string &server)
+       pzmq(const std::string &server)
             : zmq_ctx_(NULL), zmq_socket_(NULL), rpc_server_(server), flage_(true), timeout_(3000)
         {
             if (server.find("://") != std::string::npos)
@@ -81,21 +81,7 @@ namespace StackFlows
         {
             return timeout_;
         }
-        std::string get_zmq_url()
-        {
-            if ((!flage_.load()) && is_bind() && (zmq_url_.find("tcp://") != std::string::npos) &&
-                (zmq_url_.find(":*") != std::string::npos))
-            {
-                std::vector<char> zmq_url(zmq_url_.length() + 8, 0);
-                size_t addr_len = zmq_url.size();
-                if (zmq_getsockopt(zmq_socket_, ZMQ_LAST_ENDPOINT, zmq_url.data(), &addr_len) != 0)
-                {
-                    return zmq_url_;
-                }
-                zmq_url_ = std::string(zmq_url.data());
-            }
-            return zmq_url_;
-        }
+        
         std::string _rpc_list_action(pzmq *self, const std::shared_ptr<pzmq_data> &_None)
         {
             std::string action_list;
