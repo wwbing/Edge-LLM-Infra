@@ -36,3 +36,19 @@ target_link_libraries(rpc_server
     pthread
 )
 
+
+add_executable(pz_rpc_client pz_rpc_call.cc ../hybrid-comm/src/pzmq_data.cpp )
+
+target_link_libraries(pz_rpc_client
+
+    zmq 
+    pthread
+)
+
+add_executable(pz_rpc_server pz_rpc_server.cc ../hybrid-comm/src/pzmq_data.cpp )
+
+target_link_libraries(pz_rpc_server
+    zmq 
+    pthread
+)
+
