@@ -10,7 +10,6 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include <iostream>
-// #define CONFIG_SUPPORTTHREADSAFE 0
 
 #include <string>
 #include <list>
@@ -67,10 +66,7 @@ namespace StackFlows
             EVENT_SETUP,
             EVENT_EXIT,
             EVENT_PAUSE,
-            EVENT_WORK,
             EVENT_STOP,
-            EVENT_LINK,
-            EVENT_UNLINK,
             EVENT_TASKINFO,
             EVENT_SWITCH_INPUT,
             EVENT_SYS_INIT,
@@ -95,14 +91,10 @@ namespace StackFlows
 
         std::unordered_map<int, std::shared_ptr<llm_channel_obj>> llm_task_channel_;
 
-        std::function<void(const std::string &, const std::string &, const std::string &)> _link_;
-        std::function<void(const std::string &, const std::string &, const std::string &)> _unlink_;
         std::function<int(const std::string &, const std::string &, const std::string &)> _setup_;
         std::function<int(const std::string &, const std::string &, const std::string &)> _exit_;
         std::function<void(const std::string &, const std::string &, const std::string &)> _pause_;
-        std::function<void(const std::string &, const std::string &, const std::string &)> _work_;
         std::function<void(const std::string &, const std::string &, const std::string &)> _taskinfo_;
-        std::function<void(const std::string &, const std::string &, const std::string &)> _get_channl_;
 
         StackFlow(const std::string &unit_name);
         void even_loop();
@@ -142,36 +134,6 @@ namespace StackFlows
         virtual int setup(const std::string &zmq_url, const std::string &raw);
         virtual int setup(const std::string &work_id, const std::string &object, const std::string &data);
 
-        std::string _rpc_link(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data);
-        void _link(const std::shared_ptr<void> &arg)
-        {
-            std::shared_ptr<stackflow_data> originalPtr = std::static_pointer_cast<stackflow_data>(arg);
-            std::string zmq_url = originalPtr->string(0);
-            std::string data = originalPtr->string(1);
-            // printf("void _link run \n");
-            request_id_ = sample_json_str_get(data, "request_id");
-            out_zmq_url_ = zmq_url;
-            if (status_.load())
-                link(zmq_url, data);
-        };
-        virtual void link(const std::string &zmq_url, const std::string &raw);
-        virtual void link(const std::string &work_id, const std::string &object, const std::string &data);
-
-        std::string _rpc_unlink(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data);
-        void _unlink(const std::shared_ptr<void> &arg)
-        {
-            std::shared_ptr<stackflow_data> originalPtr = std::static_pointer_cast<stackflow_data>(arg);
-            std::string zmq_url = originalPtr->string(0);
-            std::string data = originalPtr->string(1);
-            // printf("void _unlink run \n");
-            request_id_ = sample_json_str_get(data, "request_id");
-            out_zmq_url_ = zmq_url;
-            if (status_.load())
-                unlink(zmq_url, data);
-        };
-        virtual void unlink(const std::string &zmq_url, const std::string &raw);
-        virtual void unlink(const std::string &work_id, const std::string &object, const std::string &data);
-
         std::string _rpc_exit(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data);
         void _exit(const std::shared_ptr<void> &arg)
         {
@@ -185,20 +147,6 @@ namespace StackFlows
         }
         virtual int exit(const std::string &zmq_url, const std::string &raw);
         virtual int exit(const std::string &work_id, const std::string &object, const std::string &data);
-
-        std::string _rpc_work(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data);
-        void _work(const std::shared_ptr<void> &arg)
-        {
-            std::shared_ptr<stackflow_data> originalPtr = std::static_pointer_cast<stackflow_data>(arg);
-            std::string zmq_url = originalPtr->string(0);
-            std::string data = originalPtr->string(1);
-            request_id_ = sample_json_str_get(data, "request_id");
-            out_zmq_url_ = zmq_url;
-            if (status_.load())
-                work(zmq_url, data);
-        }
-        virtual void work(const std::string &zmq_url, const std::string &raw);
-        virtual void work(const std::string &work_id, const std::string &object, const std::string &data);
 
         std::string _rpc_pause(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data);
         void _pause(const std::shared_ptr<void> &arg)
@@ -289,7 +237,6 @@ namespace StackFlows
             _call.call_rpc_action("release_unit", _work_id, [](pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data) {});
             llm_task_channel_[_work_id_num].reset();
             llm_task_channel_.erase(_work_id_num);
-            // SLOGI("release work_id %s success", _work_id.c_str());
             return false;
         }
         bool sys_release_unit(int work_id_num, const std::string &work_id);

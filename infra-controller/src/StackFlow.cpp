@@ -14,24 +14,15 @@ StackFlow::StackFlow::StackFlow(const std::string &unit_name)
 {
     event_queue_.appendListener(EVENT_NONE, std::bind(&StackFlow::_none_event, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_PAUSE, std::bind(&StackFlow::_pause, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_WORK, std::bind(&StackFlow::_work, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_EXIT, std::bind(&StackFlow::_exit, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_SETUP, std::bind(&StackFlow::_setup, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_LINK, std::bind(&StackFlow::_link, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_UNLINK, std::bind(&StackFlow::_unlink, this, std::placeholders::_1));
     event_queue_.appendListener(EVENT_TASKINFO, std::bind(&StackFlow::_taskinfo, this, std::placeholders::_1));
     rpc_ctx_->register_rpc_action(
         "setup", std::bind(&StackFlow::_rpc_setup, this, std::placeholders::_1, std::placeholders::_2));
     rpc_ctx_->register_rpc_action(
         "pause", std::bind(&StackFlow::_rpc_pause, this, std::placeholders::_1, std::placeholders::_2));
-    rpc_ctx_->register_rpc_action("work",
-                                  std::bind(&StackFlow::_rpc_work, this, std::placeholders::_1, std::placeholders::_2));
     rpc_ctx_->register_rpc_action("exit",
                                   std::bind(&StackFlow::_rpc_exit, this, std::placeholders::_1, std::placeholders::_2));
-    rpc_ctx_->register_rpc_action("link",
-                                  std::bind(&StackFlow::_rpc_link, this, std::placeholders::_1, std::placeholders::_2));
-    rpc_ctx_->register_rpc_action(
-        "unlink", std::bind(&StackFlow::_rpc_unlink, this, std::placeholders::_1, std::placeholders::_2));
     rpc_ctx_->register_rpc_action(
         "taskinfo", std::bind(&StackFlow::_rpc_taskinfo, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -109,111 +100,6 @@ int StackFlow::setup(const std::string &work_id, const std::string &object, cons
     error_body["message"] = "not have unit action!";
     send("None", "None", error_body, work_id);
     return -1;
-}
-
-std::string StackFlow::_rpc_link(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
-{
-    event_queue_.enqueue(EVENT_LINK, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
-    return std::string("None");
-}
-
-void StackFlow::link(const std::string &zmq_url, const std::string &raw)
-{
-    ALOGI("StackFlow::link raw");
-    std::string work_id = sample_json_str_get(raw, "work_id");
-    try
-    {
-        auto task_channel = get_channel(sample_get_work_id_num(work_id));
-        task_channel->set_push_url(zmq_url);
-    }
-    catch (...)
-    {
-    }
-    link(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data"));
-}
-
-void StackFlow::link(const std::string &work_id, const std::string &object, const std::string &data)
-{
-    ALOGI("StackFlow::link");
-    if (_link_)
-    {
-        _link_(work_id, object, data);
-        return;
-    }
-    nlohmann::json error_body;
-    error_body["code"] = -18;
-    error_body["message"] = "not have unit action!";
-    send("None", "None", error_body, work_id);
-}
-
-std::string StackFlow::_rpc_unlink(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
-{
-    event_queue_.enqueue(EVENT_UNLINK, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
-    return std::string("None");
-}
-
-void StackFlow::unlink(const std::string &zmq_url, const std::string &raw)
-{
-    ALOGI("StackFlow::unlink raw");
-    std::string work_id = sample_json_str_get(raw, "work_id");
-    try
-    {
-        auto task_channel = get_channel(sample_get_work_id_num(work_id));
-        task_channel->set_push_url(zmq_url);
-    }
-    catch (...)
-    {
-    }
-    unlink(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data"));
-}
-
-void StackFlow::unlink(const std::string &work_id, const std::string &object, const std::string &data)
-{
-    ALOGI("StackFlow::unlink");
-    if (_unlink_)
-    {
-        _unlink_(work_id, object, data);
-        return;
-    }
-    nlohmann::json error_body;
-    error_body["code"] = -18;
-    error_body["message"] = "not have unit action!";
-    send("None", "None", error_body, work_id);
-}
-
-std::string StackFlow::_rpc_work(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
-{
-    event_queue_.enqueue(EVENT_WORK, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
-    return std::string("None");
-}
-
-void StackFlow::work(const std::string &zmq_url, const std::string &raw)
-{
-    ALOGI("StackFlow::work raw");
-    std::string work_id = sample_json_str_get(raw, "work_id");
-    try
-    {
-        auto task_channel = get_channel(sample_get_work_id_num(work_id));
-        task_channel->set_push_url(zmq_url);
-    }
-    catch (...)
-    {
-    }
-    work(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data"));
-}
-
-void StackFlow::work(const std::string &work_id, const std::string &object, const std::string &data)
-{
-    ALOGI("StackFlow::work");
-    if (_work_)
-    {
-        _work_(work_id, object, data);
-        return;
-    }
-    nlohmann::json error_body;
-    error_body["code"] = -18;
-    error_body["message"] = "not have unit action!";
-    send("None", "None", error_body, work_id);
 }
 
 std::string StackFlow::_rpc_exit(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
@@ -298,7 +184,6 @@ std::string StackFlow::_rpc_taskinfo(pzmq *_pzmq, const std::shared_ptr<pzmq_dat
 
 void StackFlow::taskinfo(const std::string &zmq_url, const std::string &raw)
 {
-    // ALOGI("StackFlow::taskinfo raw");
     std::string work_id = sample_json_str_get(raw, "work_id");
     try
     {
@@ -313,7 +198,6 @@ void StackFlow::taskinfo(const std::string &zmq_url, const std::string &raw)
 
 void StackFlow::taskinfo(const std::string &work_id, const std::string &object, const std::string &data)
 {
-    // ALOGI("StackFlow::taskinfo");
     if (_taskinfo_)
     {
         _taskinfo_(work_id, object, data);
