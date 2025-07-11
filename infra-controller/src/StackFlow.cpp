@@ -91,10 +91,6 @@ int StackFlow::setup(const std::string &zmq_url, const std::string &raw)
 int StackFlow::setup(const std::string &work_id, const std::string &object, const std::string &data)
 {
     ALOGI("StackFlow::setup");
-    if (_setup_)
-    {
-        return _setup_(work_id, object, data);
-    }
     nlohmann::json error_body;
     error_body["code"] = -18;
     error_body["message"] = "not have unit action!";
@@ -130,10 +126,7 @@ int StackFlow::exit(const std::string &zmq_url, const std::string &raw)
 int StackFlow::exit(const std::string &work_id, const std::string &object, const std::string &data)
 {
     ALOGI("StackFlow::exit");
-    if (_exit_)
-    {
-        return _exit_(work_id, object, data);
-    }
+
     nlohmann::json error_body;
     error_body["code"] = -18;
     error_body["message"] = "not have unit action!";
@@ -165,11 +158,7 @@ void StackFlow::pause(const std::string &zmq_url, const std::string &raw)
 void StackFlow::pause(const std::string &work_id, const std::string &object, const std::string &data)
 {
     ALOGI("StackFlow::pause");
-    if (_pause_)
-    {
-        _pause_(work_id, object, data);
-        return;
-    }
+
     nlohmann::json error_body;
     error_body["code"] = -18;
     error_body["message"] = "not have unit action!";
@@ -198,11 +187,6 @@ void StackFlow::taskinfo(const std::string &zmq_url, const std::string &raw)
 
 void StackFlow::taskinfo(const std::string &work_id, const std::string &object, const std::string &data)
 {
-    if (_taskinfo_)
-    {
-        _taskinfo_(work_id, object, data);
-        return;
-    }
     nlohmann::json error_body;
     error_body["code"] = -18;
     error_body["message"] = "not have unit action!";

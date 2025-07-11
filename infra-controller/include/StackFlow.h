@@ -91,11 +91,6 @@ namespace StackFlows
 
         std::unordered_map<int, std::shared_ptr<llm_channel_obj>> llm_task_channel_;
 
-        std::function<int(const std::string &, const std::string &, const std::string &)> _setup_;
-        std::function<int(const std::string &, const std::string &, const std::string &)> _exit_;
-        std::function<void(const std::string &, const std::string &, const std::string &)> _pause_;
-        std::function<void(const std::string &, const std::string &, const std::string &)> _taskinfo_;
-
         StackFlow(const std::string &unit_name);
         void even_loop();
         void _none_event(const std::shared_ptr<void> &arg);
@@ -176,9 +171,8 @@ namespace StackFlows
         virtual void taskinfo(const std::string &zmq_url, const std::string &raw);
         virtual void taskinfo(const std::string &work_id, const std::string &object, const std::string &data);
 
-        template <typename T, typename U>
-        int send(const std::string &object, const U &data, const T &error_msg, const std::string &work_id,
-                 const std::string &zmq_url = "")
+        int send(const std::string &object, const nlohmann::json &data, const std::string &error_msg,
+                 const std::string &work_id, const std::string &zmq_url = "")
         {
             nlohmann::json out_body;
             out_body["request_id"] = request_id_;

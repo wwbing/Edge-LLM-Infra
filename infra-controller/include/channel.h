@@ -73,8 +73,8 @@ namespace StackFlows
         void cear_push_url();
         static int send_raw_for_url(const std::string &zmq_url, const std::string &raw);
 
-        template <typename T, typename U>
-        int send(const std::string &object, const U &data, const T &error_msg, const std::string &work_id = "")
+        int send(const std::string &object, const nlohmann::json &data, const std::string &error_msg,
+                 const std::string &work_id = "")
         {
             nlohmann::json out_body;
             out_body["request_id"] = request_id_;
