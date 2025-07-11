@@ -12,11 +12,12 @@ using namespace StackFlows;
 StackFlow::StackFlow::StackFlow(const std::string &unit_name)
     : unit_name_(unit_name), rpc_ctx_(std::make_unique<pzmq>(unit_name))
 {
-    event_queue_.appendListener(EVENT_NONE, std::bind(&StackFlow::_none_event, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_PAUSE, std::bind(&StackFlow::_pause, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_EXIT, std::bind(&StackFlow::_exit, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_SETUP, std::bind(&StackFlow::_setup, this, std::placeholders::_1));
-    event_queue_.appendListener(EVENT_TASKINFO, std::bind(&StackFlow::_taskinfo, this, std::placeholders::_1));
+    event_queue_.appendListener(LOCAL_EVENT::EVENT_NONE, std::bind(&StackFlow::_none_event, this, std::placeholders::_1));
+    event_queue_.appendListener(LOCAL_EVENT::EVENT_PAUSE, std::bind(&StackFlow::_pause, this, std::placeholders::_1));
+    event_queue_.appendListener(LOCAL_EVENT::EVENT_EXIT, std::bind(&StackFlow::_exit, this, std::placeholders::_1));
+    event_queue_.appendListener(LOCAL_EVENT::EVENT_SETUP, std::bind(&StackFlow::_setup, this, std::placeholders::_1));
+    event_queue_.appendListener(LOCAL_EVENT::EVENT_TASKINFO,
+                                std::bind(&StackFlow::_taskinfo, this, std::placeholders::_1));
     rpc_ctx_->register_rpc_action(
         "setup", std::bind(&StackFlow::_rpc_setup, this, std::placeholders::_1, std::placeholders::_2));
     rpc_ctx_->register_rpc_action(
@@ -63,12 +64,12 @@ void StackFlow::even_loop()
 
 void StackFlow::_none_event(const std::shared_ptr<void> &arg)
 {
-    // std::shared_ptr<stackflow_data> originalPtr = std::static_pointer_cast<stackflow_data>(arg);
+    // std::shared_ptr<pzmq_data> originalPtr = std::static_pointer_cast<pzmq_data>(arg);
 }
 
 std::string StackFlow::_rpc_setup(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
 {
-    event_queue_.enqueue(EVENT_SETUP, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
+    event_queue_.enqueue(EVENT_SETUP, data);
     return std::string("None");
 }
 
@@ -100,7 +101,7 @@ int StackFlow::setup(const std::string &work_id, const std::string &object, cons
 
 std::string StackFlow::_rpc_exit(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
 {
-    event_queue_.enqueue(EVENT_EXIT, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
+    event_queue_.enqueue(EVENT_EXIT, data);
     return std::string("None");
 }
 
@@ -136,7 +137,7 @@ int StackFlow::exit(const std::string &work_id, const std::string &object, const
 
 std::string StackFlow::_rpc_pause(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
 {
-    event_queue_.enqueue(EVENT_PAUSE, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
+    event_queue_.enqueue(EVENT_PAUSE, data);
     return std::string("None");
 }
 
@@ -167,7 +168,7 @@ void StackFlow::pause(const std::string &work_id, const std::string &object, con
 
 std::string StackFlow::_rpc_taskinfo(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &data)
 {
-    event_queue_.enqueue(EVENT_TASKINFO, std::make_shared<stackflow_data>(data->get_param(0), data->get_param(1)));
+    event_queue_.enqueue(EVENT_TASKINFO, data);
     return std::string("None");
 }
 
