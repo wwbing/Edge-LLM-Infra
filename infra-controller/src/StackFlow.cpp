@@ -12,7 +12,8 @@ using namespace StackFlows;
 StackFlow::StackFlow::StackFlow(const std::string &unit_name)
     : unit_name_(unit_name), rpc_ctx_(std::make_unique<pzmq>(unit_name))
 {
-    event_queue_.appendListener(LOCAL_EVENT::EVENT_NONE, std::bind(&StackFlow::_none_event, this, std::placeholders::_1));
+    event_queue_.appendListener(LOCAL_EVENT::EVENT_NONE,
+                                std::bind(&StackFlow::_none_event, this, std::placeholders::_1));
     event_queue_.appendListener(LOCAL_EVENT::EVENT_PAUSE, std::bind(&StackFlow::_pause, this, std::placeholders::_1));
     event_queue_.appendListener(LOCAL_EVENT::EVENT_EXIT, std::bind(&StackFlow::_exit, this, std::placeholders::_1));
     event_queue_.appendListener(LOCAL_EVENT::EVENT_SETUP, std::bind(&StackFlow::_setup, this, std::placeholders::_1));
@@ -35,15 +36,13 @@ StackFlow::StackFlow::StackFlow(const std::string &unit_name)
 
 StackFlow::~StackFlow()
 {
-    while (1)
-    {
+    while (1) {
         exit_flage_.store(true);
         event_queue_.enqueue(EVENT_NONE, nullptr);
         even_loop_thread_->join();
 
         auto iteam = llm_task_channel_.begin();
-        if (iteam == llm_task_channel_.end())
-        {
+        if (iteam == llm_task_channel_.end()) {
             break;
         }
         sys_release_unit(iteam->first, "");
@@ -76,14 +75,13 @@ std::string StackFlow::_rpc_setup(pzmq *_pzmq, const std::shared_ptr<pzmq_data> 
 int StackFlow::setup(const std::string &zmq_url, const std::string &raw)
 {
     ALOGI("StackFlow::setup raw zmq_url:%s raw:%s", zmq_url.c_str(), raw.c_str());
-    int workid_num = sys_register_unit(unit_name_);
+    int workid_num      = sys_register_unit(unit_name_);
     std::string work_id = unit_name_ + "." + std::to_string(workid_num);
-    auto task_channel = get_channel(workid_num);
+    auto task_channel   = get_channel(workid_num);
     task_channel->set_push_url(zmq_url);
     task_channel->request_id_ = sample_json_str_get(raw, "request_id");
-    task_channel->work_id_ = work_id;
-    if (setup(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data")))
-    {
+    task_channel->work_id_    = work_id;
+    if (setup(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data"))) {
         sys_release_unit(workid_num, work_id);
     }
     return 0;
@@ -93,7 +91,7 @@ int StackFlow::setup(const std::string &work_id, const std::string &object, cons
 {
     ALOGI("StackFlow::setup");
     nlohmann::json error_body;
-    error_body["code"] = -18;
+    error_body["code"]    = -18;
     error_body["message"] = "not have unit action!";
     send("None", "None", error_body, work_id);
     return -1;
@@ -109,16 +107,12 @@ int StackFlow::exit(const std::string &zmq_url, const std::string &raw)
 {
     ALOGI("StackFlow::exit raw");
     std::string work_id = sample_json_str_get(raw, "work_id");
-    try
-    {
+    try {
         auto task_channel = get_channel(sample_get_work_id_num(work_id));
         task_channel->set_push_url(zmq_url);
+    } catch (...) {
     }
-    catch (...)
-    {
-    }
-    if (exit(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data")) == 0)
-    {
+    if (exit(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data")) == 0) {
         return (int)sys_release_unit(-1, work_id);
     }
     return 0;
@@ -129,7 +123,7 @@ int StackFlow::exit(const std::string &work_id, const std::string &object, const
     ALOGI("StackFlow::exit");
 
     nlohmann::json error_body;
-    error_body["code"] = -18;
+    error_body["code"]    = -18;
     error_body["message"] = "not have unit action!";
     send("None", "None", error_body, work_id);
     return 0;
@@ -145,13 +139,10 @@ void StackFlow::pause(const std::string &zmq_url, const std::string &raw)
 {
     ALOGI("StackFlow::pause raw");
     std::string work_id = sample_json_str_get(raw, "work_id");
-    try
-    {
+    try {
         auto task_channel = get_channel(sample_get_work_id_num(work_id));
         task_channel->set_push_url(zmq_url);
-    }
-    catch (...)
-    {
+    } catch (...) {
     }
     pause(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data"));
 }
@@ -161,7 +152,7 @@ void StackFlow::pause(const std::string &work_id, const std::string &object, con
     ALOGI("StackFlow::pause");
 
     nlohmann::json error_body;
-    error_body["code"] = -18;
+    error_body["code"]    = -18;
     error_body["message"] = "not have unit action!";
     send("None", "None", error_body, work_id);
 }
@@ -175,13 +166,10 @@ std::string StackFlow::_rpc_taskinfo(pzmq *_pzmq, const std::shared_ptr<pzmq_dat
 void StackFlow::taskinfo(const std::string &zmq_url, const std::string &raw)
 {
     std::string work_id = sample_json_str_get(raw, "work_id");
-    try
-    {
+    try {
         auto task_channel = get_channel(sample_get_work_id_num(work_id));
         task_channel->set_push_url(zmq_url);
-    }
-    catch (...)
-    {
+    } catch (...) {
     }
     taskinfo(work_id, sample_json_str_get(raw, "object"), sample_json_str_get(raw, "data"));
 }
@@ -189,7 +177,7 @@ void StackFlow::taskinfo(const std::string &zmq_url, const std::string &raw)
 void StackFlow::taskinfo(const std::string &work_id, const std::string &object, const std::string &data)
 {
     nlohmann::json error_body;
-    error_body["code"] = -18;
+    error_body["code"]    = -18;
     error_body["message"] = "not have unit action!";
     send("None", "None", error_body, work_id);
 }
@@ -201,12 +189,12 @@ int StackFlow::sys_register_unit(const std::string &unit_name)
     std::string out_port;
     std::string inference_port;
 
-    unit_call("sys", "register_unit", unit_name, [&](const std::shared_ptr<StackFlows::pzmq_data> &pzmg_msg)
-              {
+    unit_call("sys", "register_unit", unit_name, [&](const std::shared_ptr<StackFlows::pzmq_data> &pzmg_msg) {
         str_port       = pzmg_msg->get_param(1);
         out_port       = pzmg_msg->get_param(0, str_port);
         inference_port = pzmg_msg->get_param(1, str_port);
-        str_port       = pzmg_msg->get_param(0); });
+        str_port       = pzmg_msg->get_param(0);
+    });
     work_id_number = std::stoi(str_port);
     ALOGI("work_id_number:%d, out_port:%s, inference_port:%s ", work_id_number, out_port.c_str(),
           inference_port.c_str());
@@ -218,14 +206,11 @@ bool StackFlow::sys_release_unit(int work_id_num, const std::string &work_id)
 {
     std::string _work_id;
     int _work_id_num;
-    if (work_id.empty())
-    {
-        _work_id = sample_get_work_id(work_id_num, unit_name_);
+    if (work_id.empty()) {
+        _work_id     = sample_get_work_id(work_id_num, unit_name_);
         _work_id_num = work_id_num;
-    }
-    else
-    {
-        _work_id = work_id;
+    } else {
+        _work_id     = work_id;
         _work_id_num = sample_get_work_id_num(work_id);
     }
     unit_call("sys", "release_unit", _work_id);

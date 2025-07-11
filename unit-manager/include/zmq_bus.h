@@ -14,8 +14,7 @@ using namespace StackFlows;
 int zmq_bus_publisher_push(const std::string &work_id, const std::string &json_str);
 void zmq_com_send(int com_id, const std::string &out_str);
 
-class zmq_bus_com
-{
+class zmq_bus_com {
 protected:
     std::string _zmq_url;
     int exit_flage;

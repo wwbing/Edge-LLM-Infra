@@ -20,6 +20,5 @@
 
 using namespace StackFlows;
 
-
 void remote_server_work();
 void remote_server_stop_work();

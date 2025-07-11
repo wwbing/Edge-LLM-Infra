@@ -114,25 +114,26 @@ std::string StackFlows::sample_get_work_id(int work_id_num, const std::string &u
     return unit_name + "." + std::to_string(work_id_num);
 }
 
-void StackFlows::unicode_to_utf8(unsigned int codepoint, char *output, int *length) {
+void StackFlows::unicode_to_utf8(unsigned int codepoint, char *output, int *length)
+{
     if (codepoint <= 0x7F) {
         output[0] = codepoint & 0x7F;
-        *length = 1;
+        *length   = 1;
     } else if (codepoint <= 0x7FF) {
         output[0] = 0xC0 | ((codepoint >> 6) & 0x1F);
         output[1] = 0x80 | (codepoint & 0x3F);
-        *length = 2;
+        *length   = 2;
     } else if (codepoint <= 0xFFFF) {
         output[0] = 0xE0 | ((codepoint >> 12) & 0x0F);
         output[1] = 0x80 | ((codepoint >> 6) & 0x3F);
         output[2] = 0x80 | (codepoint & 0x3F);
-        *length = 3;
+        *length   = 3;
     } else if (codepoint <= 0x10FFFF) {
         output[0] = 0xF0 | ((codepoint >> 18) & 0x07);
         output[1] = 0x80 | ((codepoint >> 12) & 0x3F);
         output[2] = 0x80 | ((codepoint >> 6) & 0x3F);
         output[3] = 0x80 | (codepoint & 0x3F);
-        *length = 4;
+        *length   = 4;
     } else {
         *length = 0;
     }
@@ -160,15 +161,19 @@ std::string StackFlows::unit_call(const std::string &unit_name, const std::strin
 {
     std::string value;
     pzmq _call(unit_name);
-    _call.call_rpc_action(unit_action, data, [&value](pzmq *_pzmq, const std::shared_ptr<pzmq_data> &raw) { value = raw->string(); });
+    _call.call_rpc_action(unit_action, data,
+                          [&value](pzmq *_pzmq, const std::shared_ptr<pzmq_data> &raw) { value = raw->string(); });
     return value;
 }
 
-void StackFlows::unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data, std::function<void(const std::shared_ptr<StackFlows::pzmq_data> &)> callback)
+void StackFlows::unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data,
+                           std::function<void(const std::shared_ptr<StackFlows::pzmq_data> &)> callback)
 {
     std::string value;
     StackFlows::pzmq _call(unit_name);
-    _call.call_rpc_action(unit_action, data, [callback](StackFlows::pzmq *_pzmq, const std::shared_ptr<StackFlows::pzmq_data> &raw) { callback(raw); });
+    _call.call_rpc_action(
+        unit_action, data,
+        [callback](StackFlows::pzmq *_pzmq, const std::shared_ptr<StackFlows::pzmq_data> &raw) { callback(raw); });
 }
 
 bool StackFlows::file_exists(const std::string &filePath)

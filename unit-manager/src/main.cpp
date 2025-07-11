@@ -29,8 +29,8 @@ void get_run_config()
     key_sql["config_zmq_s_format"] = std::string("ipc:///tmp/llm/%i.sock");
     key_sql["config_zmq_c_format"] = std::string("ipc:///tmp/llm/%i.sock");
 
-    key_sql["config_tcp_server"] = 10001;
-    key_sql["config_enable_tcp"] = 1;
+    key_sql["config_tcp_server"]   = 10001;
+    key_sql["config_enable_tcp"]   = 1;
     key_sql["config_zmq_min_port"] = 5010;
     key_sql["config_zmq_max_port"] = 5555;
     load_default_config();
@@ -47,8 +47,7 @@ void all_work()
     remote_server_work();
     int enable_tcp = 0;
     SAFE_READING(enable_tcp, int, "config_enable_tcp");
-    if (enable_tcp)
-        tcp_work();
+    if (enable_tcp) tcp_work();
 }
 
 void all_stop_work()
@@ -56,8 +55,7 @@ void all_stop_work()
     int enable_tcp = 0;
     SAFE_READING(enable_tcp, int, "config_enable_tcp");
 
-    if (enable_tcp)
-        tcp_stop_work();
+    if (enable_tcp) tcp_stop_work();
     remote_server_stop_work();
 }
 
@@ -79,8 +77,7 @@ int main(int argc, char *argv[])
     signal(SIGTERM, __sigint);
     signal(SIGINT, __sigint);
     mkdir("/tmp/llm", 0777);
-    if (pthread_spin_init(&key_sql_lock, PTHREAD_PROCESS_PRIVATE) != 0)
-    {
+    if (pthread_spin_init(&key_sql_lock, PTHREAD_PROCESS_PRIVATE) != 0) {
         ALOGE("key_sql_lock init false");
         exit(1);
     }
@@ -88,8 +85,7 @@ int main(int argc, char *argv[])
     get_run_config();
     all_work();
     ALOGD("llm_sys work");
-    while (main_exit_flage == 0)
-    {
+    while (main_exit_flage == 0) {
         sleep(1);
     }
 

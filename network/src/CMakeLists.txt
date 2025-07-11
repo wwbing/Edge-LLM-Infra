@@ -22,7 +22,7 @@ set(net_SRCS
   TcpServer.cc
   util.cc
   )
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_library(network ${net_SRCS})
 target_link_libraries(network  glog)
 target_include_directories(network PUBLIC

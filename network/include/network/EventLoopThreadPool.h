@@ -4,20 +4,21 @@
 #include <memory>
 #include <vector>
 #include <string>
-namespace network
-{
+namespace network {
 
-  class EventLoop;
-  class EventLoopThread;
+class EventLoop;
+class EventLoopThread;
 
-  class EventLoopThreadPool
-  {
-  public:
+class EventLoopThreadPool {
+public:
     typedef std::function<void(EventLoop *)> ThreadInitCallback;
 
     EventLoopThreadPool(EventLoop *baseLoop, const std::string &nameArg);
     ~EventLoopThreadPool();
-    void setThreadNum(int numThreads) { numThreads_ = numThreads; }
+    void setThreadNum(int numThreads)
+    {
+        numThreads_ = numThreads;
+    }
     void start(const ThreadInitCallback &cb = ThreadInitCallback());
 
     // valid after calling start()
@@ -29,11 +30,17 @@ namespace network
 
     std::vector<EventLoop *> getAllLoops();
 
-    bool started() const { return started_; }
+    bool started() const
+    {
+        return started_;
+    }
 
-    const std::string &name() const { return name_; }
+    const std::string &name() const
+    {
+        return name_;
+    }
 
-  private:
+private:
     EventLoop *baseLoop_;
     std::string name_;
     bool started_ = false;
@@ -41,6 +48,6 @@ namespace network
     int next_;
     std::vector<std::unique_ptr<EventLoopThread>> threads_;
     std::vector<EventLoop *> loops_;
-  };
+};
 
-} // namespace network
+}  // namespace network

@@ -22,8 +22,9 @@ std::string sample_get_work_id(int work_id_num, const std::string &unit_name);
 bool decode_stream(const std::string &in, std::string &out, std::unordered_map<int, std::string> &stream_buff);
 
 std::string unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data);
-void unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data, std::function<void(const std::shared_ptr<StackFlows::pzmq_data> &)> callback);
+void unit_call(const std::string &unit_name, const std::string &unit_action, const std::string &data,
+               std::function<void(const std::shared_ptr<StackFlows::pzmq_data> &)> callback);
 
-bool file_exists(const std::string& filePath);
+bool file_exists(const std::string &filePath);
 void unicode_to_utf8(unsigned int codepoint, char *output, int *length);
 };  // namespace StackFlows

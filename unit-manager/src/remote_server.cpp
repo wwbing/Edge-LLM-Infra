@@ -48,25 +48,22 @@ unit_data *sys_allocate_unit(const std::string &unit)
 {
     unit_data *unit_p = new unit_data();
     {
-        unit_p->port_ = work_id_number_counter++;
+        unit_p->port_     = work_id_number_counter++;
         std::string ports = std::to_string(unit_p->port_);
-        unit_p->work_id = unit + "." + ports;
+        unit_p->work_id   = unit + "." + ports;
     }
     {
         int port;
-        for (size_t i = 0; i < port_list.size(); i++)
-        {
-            if (!port_list[i])
-            {
-                port = port_list_start + i;
+        for (size_t i = 0; i < port_list.size(); i++) {
+            if (!port_list[i]) {
+                port         = port_list_start + i;
                 port_list[i] = true;
                 break;
             }
         }
-        std::string ports = std::to_string(port);
+        std::string ports      = std::to_string(port);
         std::string zmq_format = zmq_s_format;
-        if (zmq_s_format.find("sock") != std::string::npos)
-        {
+        if (zmq_s_format.find("sock") != std::string::npos) {
             zmq_format += ".";
             zmq_format += unit;
             zmq_format += ".output_url";
@@ -74,24 +71,21 @@ unit_data *sys_allocate_unit(const std::string &unit)
         std::vector<char> buff(zmq_format.length() + ports.length(), 0);
         sprintf((char *)buff.data(), zmq_format.c_str(), port);
         std::string zmq_s_url = std::string((char *)buff.data());
-        unit_p->output_url = zmq_s_url;
+        unit_p->output_url    = zmq_s_url;
     }
 
     {
         int port;
-        for (size_t i = 0; i < port_list.size(); i++)
-        {
-            if (!port_list[i])
-            {
-                port = port_list_start + i;
+        for (size_t i = 0; i < port_list.size(); i++) {
+            if (!port_list[i]) {
+                port         = port_list_start + i;
                 port_list[i] = true;
                 break;
             }
         }
-        std::string ports = std::to_string(port);
+        std::string ports      = std::to_string(port);
         std::string zmq_format = zmq_s_format;
-        if (zmq_s_format.find("sock") != std::string::npos)
-        {
+        if (zmq_s_format.find("sock") != std::string::npos) {
             zmq_format += ".";
             zmq_format += unit;
             zmq_format += ".inference_url";
@@ -110,8 +104,7 @@ int sys_release_unit(const std::string &unit)
 {
     unit_data *unit_p = NULL;
     SAFE_READING(unit_p, unit_data *, unit);
-    if (NULL == unit_p)
-    {
+    if (NULL == unit_p) {
         return -1;
     }
 
@@ -149,8 +142,7 @@ std::string rpc_sql_set(pzmq *_pzmq, const std::shared_ptr<pzmq_data> &raw)
 {
     std::string key = sample_json_str_get(raw->string(), "key");
     std::string val = sample_json_str_get(raw->string(), "val");
-    if (key.empty())
-        return "False";
+    if (key.empty()) return "False";
     sys_sql_set(key, val);
     return "Success";
 }

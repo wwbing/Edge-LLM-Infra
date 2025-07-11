@@ -16,7 +16,6 @@ std::string fun1_(pzmq* self, const std::shared_ptr<pzmq_data>& msg)
     }
     std::cout << std::endl;
 
-    
     std::string param0 = msg->get_param(0);
     std::string param1 = msg->get_param(1);
 

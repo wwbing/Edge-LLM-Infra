@@ -21,8 +21,7 @@ static void __sigint(int iSigNo)
     main_exit_flage = 1;
 }
 typedef std::function<void(const std::string &data, bool finish)> task_callback_t;
-class llm_task
-{
+class llm_task {
 private:
 public:
     std::string model_;
@@ -39,28 +38,20 @@ public:
 
     bool parse_config(const nlohmann::json &config_body)
     {
-        try
-        {
-            model_ = config_body.at("model");
+        try {
+            model_           = config_body.at("model");
             response_format_ = config_body.at("response_format");
-            enoutput_ = config_body.at("enoutput");
-            if (config_body.contains("input"))
-            {
-                if (config_body["input"].is_string())
-                {
+            enoutput_        = config_body.at("enoutput");
+            if (config_body.contains("input")) {
+                if (config_body["input"].is_string()) {
                     inputs_.push_back(config_body["input"].get<std::string>());
-                }
-                else if (config_body["input"].is_array())
-                {
-                    for (auto _in : config_body["input"])
-                    {
+                } else if (config_body["input"].is_array()) {
+                    for (auto _in : config_body["input"]) {
                         inputs_.push_back(_in.get<std::string>());
                     }
                 }
             }
-        }
-        catch (...)
-        {
+        } catch (...) {
             return true;
         }
         enstream_ = (response_format_.find("stream") != std::string::npos);
@@ -69,8 +60,7 @@ public:
 
     int load_model(const nlohmann::json &config_body)
     {
-        if (parse_config(config_body))
-        {
+        if (parse_config(config_body)) {
             return -1;
         }
         return 0;
@@ -89,7 +79,7 @@ public:
     llm_task(const std::string &workid)
     {
     }
- 
+
     void start()
     {
     }
@@ -104,8 +94,7 @@ public:
     }
 };
 
-class llm_llm : public StackFlow
-{
+class llm_llm : public StackFlow {
 private:
     int task_count_;
     std::unordered_map<int, std::shared_ptr<llm_task>> llm_task_;
@@ -120,13 +109,11 @@ public:
                      const std::weak_ptr<llm_channel_obj> llm_channel_weak, const std::string &data, bool finish)
     {
         auto llm_task_obj = llm_task_obj_weak.lock();
-        auto llm_channel = llm_channel_weak.lock();
-        if (!(llm_task_obj && llm_channel))
-        {
+        auto llm_channel  = llm_channel_weak.lock();
+        if (!(llm_task_obj && llm_channel)) {
             return;
         }
-        if (llm_channel->enstream_)
-        {
+        if (llm_channel->enstream_) {
             static int count = 0;
             nlohmann::json data_body;
             data_body["index"] = count++;
@@ -136,13 +123,10 @@ public:
             else
                 data_body["delta"] = std::string("");
             data_body["finish"] = finish;
-            if (finish)
-                count = 0;
+            if (finish) count = 0;
 
             llm_channel->send(llm_task_obj->response_format_, data_body, LLM_NO_ERROR);
-        }
-        else if (finish)
-        {
+        } else if (finish) {
             llm_channel->send(llm_task_obj->response_format_, data, LLM_NO_ERROR);
         }
     }
@@ -153,17 +137,15 @@ public:
     {
         nlohmann::json error_body;
         auto llm_task_obj = llm_task_obj_weak.lock();
-        auto llm_channel = llm_channel_weak.lock();
-        if (!(llm_task_obj && llm_channel))
-        {
-            error_body["code"] = -11;
+        auto llm_channel  = llm_channel_weak.lock();
+        if (!(llm_task_obj && llm_channel)) {
+            error_body["code"]    = -11;
             error_body["message"] = "Model run failed.";
             send("None", "None", error_body, unit_name_);
             return;
         }
-        if (data.empty() || (data == "None"))
-        {
-            error_body["code"] = -24;
+        if (data.empty() || (data == "None")) {
+            error_body["code"]    = -24;
             error_body["message"] = "The inference data is empty.";
             send("None", "None", error_body, unit_name_);
             return;
@@ -171,19 +153,15 @@ public:
         const std::string *next_data = &data;
         int ret;
         std::string tmp_msg;
-        if (object.find("stream") != std::string::npos)
-        {
+        if (object.find("stream") != std::string::npos) {
             static std::unordered_map<int, std::string> stream_buff;
-            try
-            {
+            try {
                 if (decode_stream(data, tmp_msg, stream_buff)) {
                     return;
                 };
-            }
-            catch (...)
-            {
+            } catch (...) {
                 stream_buff.clear();
-                error_body["code"] = -25;
+                error_body["code"]    = -25;
                 error_body["message"] = "Stream data index error.";
                 send("None", "None", error_body, unit_name_);
                 return;
@@ -197,32 +175,26 @@ public:
     int setup(const std::string &work_id, const std::string &object, const std::string &data) override
     {
         nlohmann::json error_body;
-        if ((llm_task_channel_.size() - 1) == task_count_)
-        {
-
-            error_body["code"] = -21;
+        if ((llm_task_channel_.size() - 1) == task_count_) {
+            error_body["code"]    = -21;
             error_body["message"] = "task full";
             send("None", "None", error_body, unit_name_);
             return -1;
         }
-        int work_id_num = sample_get_work_id_num(work_id);
-        auto llm_channel = get_channel(work_id);
+        int work_id_num   = sample_get_work_id_num(work_id);
+        auto llm_channel  = get_channel(work_id);
         auto llm_task_obj = std::make_shared<llm_task>(work_id);
         nlohmann::json config_body;
-        try
-        {
+        try {
             config_body = nlohmann::json::parse(data);
-        }
-        catch (...)
-        {
-            error_body["code"] = -2;
+        } catch (...) {
+            error_body["code"]    = -2;
             error_body["message"] = "json format error.";
             send("None", "None", error_body, unit_name_);
             return -2;
         }
         int ret = llm_task_obj->load_model(config_body);
-        if (ret == 0)
-        {
+        if (ret == 0) {
             llm_channel->set_output(true);
             llm_channel->set_stream(llm_task_obj->enstream_);
             llm_task_obj->set_output(std::bind(&llm_llm::task_output, this, std::weak_ptr<llm_task>(llm_task_obj),
@@ -236,10 +208,8 @@ public:
             send("None", "None", LLM_NO_ERROR, work_id);
 
             return 0;
-        }
-        else
-        {
-            error_body["code"] = -5;
+        } else {
+            error_body["code"]    = -5;
             error_body["message"] = "Model loading failed.";
             send("None", "None", error_body, unit_name_);
             return -1;
@@ -250,29 +220,24 @@ public:
     {
         nlohmann::json req_body;
         int work_id_num = sample_get_work_id_num(work_id);
-        if (WORK_ID_NONE == work_id_num)
-        {
+        if (WORK_ID_NONE == work_id_num) {
             std::vector<std::string> task_list;
             std::transform(llm_task_channel_.begin(), llm_task_channel_.end(), std::back_inserter(task_list),
-                           [](const auto task_channel)
-                           { return task_channel.second->work_id_; });
+                           [](const auto task_channel) { return task_channel.second->work_id_; });
             req_body = task_list;
             send("llm.tasklist", req_body, LLM_NO_ERROR, work_id);
-        }
-        else
-        {
-            if (llm_task_.find(work_id_num) == llm_task_.end())
-            {
-                req_body["code"] = -6;
+        } else {
+            if (llm_task_.find(work_id_num) == llm_task_.end()) {
+                req_body["code"]    = -6;
                 req_body["message"] = "Unit Does Not Exist";
                 send("None", "None", req_body, work_id);
                 return;
             }
-            auto llm_task_obj = llm_task_[work_id_num];
-            req_body["model"] = llm_task_obj->model_;
+            auto llm_task_obj           = llm_task_[work_id_num];
+            req_body["model"]           = llm_task_obj->model_;
             req_body["response_format"] = llm_task_obj->response_format_;
-            req_body["enoutput"] = llm_task_obj->enoutput_;
-            req_body["inputs"] = llm_task_obj->inputs_;
+            req_body["enoutput"]        = llm_task_obj->enoutput_;
+            req_body["inputs"]          = llm_task_obj->inputs_;
             send("llm.taskinfo", req_body, LLM_NO_ERROR, work_id);
         }
     }
@@ -281,9 +246,8 @@ public:
     {
         nlohmann::json error_body;
         int work_id_num = sample_get_work_id_num(work_id);
-        if (llm_task_.find(work_id_num) == llm_task_.end())
-        {
-            error_body["code"] = -6;
+        if (llm_task_.find(work_id_num) == llm_task_.end()) {
+            error_body["code"]    = -6;
             error_body["message"] = "Unit Does Not Exist";
             send("None", "None", error_body, work_id);
             return -1;
@@ -298,11 +262,9 @@ public:
 
     ~llm_llm()
     {
-        while (1)
-        {
+        while (1) {
             auto iteam = llm_task_.begin();
-            if (iteam == llm_task_.end())
-            {
+            if (iteam == llm_task_.end()) {
                 break;
             }
             iteam->second->stop();
@@ -319,8 +281,7 @@ int main(int argc, char *argv[])
     signal(SIGINT, __sigint);
     mkdir("/tmp/llm", 0777);
     llm_llm llm;
-    while (!main_exit_flage)
-    {
+    while (!main_exit_flage) {
         sleep(1);
     }
     return 0;
